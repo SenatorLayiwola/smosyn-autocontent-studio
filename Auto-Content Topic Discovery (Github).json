@@ -1,0 +1,776 @@
+{
+  "name": "SMOSYN CONTENT STUDIO",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        128,
+        240
+      ],
+      "id": "5911fb60-907f-4f61-942b-d7ca5872e95d",
+      "name": "Schedule Trigger",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "operation": "google_trends",
+        "q": "Business",
+        "additionalFields": {
+          "hl": "en",
+          "geo": "GB",
+          "data_type": "RELATED_QUERIES",
+          "output": "json"
+        },
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-serpapi.serpApi",
+      "typeVersion": 1,
+      "position": [
+        368,
+        304
+      ],
+      "id": "1df5c7fb-a46f-43de-b96b-126a93fd3fdc",
+      "name": "Google_trends search",
+      "credentials": {
+        "serpApi": {
+          "id": "YOUR_SERPAPI_CREDENTIAL_ID",
+          "name": "SMOSYN SerpApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://news.google.com/rss/search?q=AI+automation+small+business+uk",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        368,
+        48
+      ],
+      "id": "389aab87-6aa2-47e7-9112-f7fd16eec443",
+      "name": "GOOGLE"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const j = item.json;\n\n  const isReddit = !!(j.author || j.selftext || j.subreddit_name_prefixed);\n  const isSerpAPI = !!(j.related_queries || j.trending_searches || j.query);\n\n  const title =\n    j.title || j.name || j.headline || j.query ||\n    (j.trending_searches?.[0]?.title?.query) || '';\n\n  const description =\n    j.contentSnippet || j.snippet || j.selftext ||\n    j.description || j.summary ||\n    (j.related_queries?.top?.map(q => q.query).join(', ')) ||\n    (j.trending_searches?.map(t => t.title?.query).join(', ')) || '';\n\n  const source = isReddit ? 'Reddit'\n    : isSerpAPI ? 'Google Trends'\n    : j.source || j.domain || j.creator || 'RSS Feed';\n\n  const url = j.link || j.url || j.permalink || '';\n\n  const published_at = j.isoDate || j.pubDate || j.date ||\n    j.published_at || new Date().toISOString();\n\n  return {\n    json: { title, description, source, url, published_at }\n  };\n}).filter(item => item.json.title !== '');\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        224
+      ],
+      "id": "3607c94c-1ef2-42ac-8705-9a2a3ecd6756",
+      "name": "Normalize Signals"
+    },
+    {
+      "parameters": {
+        "jsCode": "const signals = items.map(i => i.json);\n\nconst limited = signals.slice(0, 30);\n\nconst formatted = limited.map((s, idx) =>\n  '[' + (idx + 1) + '] Source: ' + s.source +\n  '\\nTitle: ' + s.title +\n  '\\nSummary: ' + (s.description || '').slice(0, 300) +\n  '\\nDate: ' + s.published_at\n).join('\\n\\n');\n\nreturn [\n  {\n    json: {\n      source_signals: formatted\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        224
+      ],
+      "id": "c40296af-5a3f-4572-8776-84c55bd40693",
+      "name": "Aggregate for AI"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const j = item.json;\n\n  // Data is nested under this literal key from Split Out\n  const t = j['output[0].content[0].text.topics'] || {};\n\n  let order = t.platform_order || [];\n  if (!Array.isArray(order)) {\n    order = Object.values(order);\n  }\n\n  return {\n    json: {\n      TOPIC: t.topic || '',\n      INDUSTRY: t.industry || '',\n      REGION: t.region || '',\n      PILLAR: t.pillar || '',\n      CONTENT_TYPE: t.content_type || '',\n      SCORE: t.priority_score || 0,\n      PRIMARY_PLATFORM: order[0] || '',\n      SECONDARY: order[1] || '',\n      TERTIARY: order[2] || '',\n      QUATERNARY: order[3] || '',\n      PLATFORM_REASON: t.platform_reason || '',\n      STATUS: 'Pending Review',\n      CREATED_AT: t.created_at || new Date().toISOString().split('T')[0]\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1504,
+        224
+      ],
+      "id": "73193ced-f22e-49df-be97-6f8f8cd137b3",
+      "name": " Parse Platform Order"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "SMOSYN AGENCY MS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "YOUR_SHEET_TAB_GID",
+          "mode": "list",
+          "cachedResultName": "Content Topic",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "TOPIC": "={{ $json.TOPIC }}",
+            "INDUSTRY": "={{ $json.INDUSTRY }}",
+            "REGION": "={{ $json.REGION }}",
+            "CONTENT TYPE": "={{ $json.CONTENT_TYPE }}",
+            "SCORE": "={{ $json.SCORE }}",
+            " PRIMARY PLATFORM": "={{ $json.PRIMARY_PLATFORM }}",
+            "SECONDARY": "={{ $json.SECONDARY }}",
+            "TERTIARY": "={{ $json.TERTIARY }}",
+            "PLATFORM REASON": "={{ $json.PLATFORM_REASON }}",
+            "CREATED_AT": "={{ $json.CREATED_AT }}",
+            "STATUS": "={{ $json.STATUS }}",
+            "PILLAR": "={{ $json.PILLAR }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "INDUSTRY",
+              "displayName": "INDUSTRY",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "REGION",
+              "displayName": "REGION",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "PILLAR",
+              "displayName": "PILLAR",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " PRIMARY PLATFORM",
+              "displayName": " PRIMARY PLATFORM",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "SECONDARY",
+              "displayName": "SECONDARY",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "TERTIARY",
+              "displayName": "TERTIARY",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "PLATFORM REASON",
+              "displayName": "PLATFORM REASON",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CONTENT TYPE",
+              "displayName": "CONTENT TYPE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "TOPIC",
+              "displayName": "TOPIC",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CREATED_AT",
+              "displayName": "CREATED_AT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "SCORE",
+              "displayName": "SCORE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "STATUS",
+              "displayName": "STATUS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "DISPATCHED AT",
+              "displayName": "DISPATCHED AT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2112,
+        224
+      ],
+      "id": "ef198eab-5263-489a-9b92-20847335911c",
+      "name": " Append  Content Topic",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "56G4saQ9gcqD6lOp",
+          "name": "SMOSYN Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "=\n📋 Topic Discovery Complete\n\nNew topics: {{ $input.all().length }}\nHigh priority (8+): {{ $input.all().filter(i => i.json.SCORE >= 8).length }}\n\nReview sheet: [https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2304,
+        224
+      ],
+      "id": "a9998196-aa78-4a45-bea6-647e41f86972",
+      "name": "Send a text message",
+      "webhookId": "15fb148f-c4d0-4362-86b4-1786672d584c",
+      "credentials": {
+        "telegramApi": {
+          "id": "Z08vJORLVCykMtXE",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1584de10-2dc7-4eb0-a586-3f6bb3d11901",
+              "leftValue": "={{ $json.SCORE }}",
+              "rightValue": 6,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "16cc0a1b-5517-49a1-b986-4369bac83112",
+              "leftValue": "={{ $json.TOPIC }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1680,
+        224
+      ],
+      "id": "ee6fbce1-874c-481b-811a-236ace3a2e11",
+      "name": "Priority Scoore"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list",
+          "cachedResultName": "GPT-4"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=\nYou are a Senior Content Strategist, Market Researcher, and Editorial Director with expertise in AI-driven business transformation and digital marketing intelligence.\n\nYour primary function is to extract genuine market insights from raw data signals search results, forum discussions, news feeds, and social conversations and transform them into strategically diverse, high-impact content topics that drive engagement and business outcomes.\n\nCore Competencies \n\nStrategic Analysis: You identify patterns in user behavior, emerging pain points, and underserved information gaps across multiple data sources.\n\nEditorial Judgment: You curate topics with the discernment of a seasoned editor building a premium publication's content calendar, prioritizing substance and differentiation over volume.\n\nAudience Intelligence: You understand distinct buyer personas across markets  from local service businesses to SaaS founders and craft topics that speak to their specific contexts, challenges, and decision making stages.\n\nMandatory Operating Standards\nDiversity Enforcement: Every topic you generate must be meaningfully distinct. If two ideas share similar framing, audience, or angle, eliminate the weaker one and create an entirely new approach. Repetition in structure, phrasing, or positioning is strictly prohibited.\n\nSource-Driven Creation: Ground every topic in actual signals from the provided data. Reference specific trends, questions, or frustrations you observe. Avoid generic speculation or manufactured problems.\n\nIndustry Rotation Protocol: Systematically vary target industries across your outputL Local services, ecommerce, SaaS platforms, creative agencies, consultancies, startups, professional services. No single sector should dominate.\n\nIntent Spectrum Coverage: Distribute topics across the full buyer journey early awareness (educational), problem recognition (diagnostic), solution exploration (comparative), and purchase decision (evaluative).\n\nAnti-Generic Safeguards: Ban templated phrasing patterns. Forbidden constructions include: \"How [audience] can leverage [buzzword]\", \"[Industry] guide to [technology]\", \"Why [demographic] needs [solution]\". Every topic must sound editorially crafted, not marketing-generated.\n\nLinguistic Precision: Avoid overused terms unless directly supported by source data. Rotate vocabulary naturally. If you've used \"SME\" twice, switch to \"independent businesses\", \"growing companies\", or \"established local firms\".\n\nQuality Benchmark\nYour output should read like a sophisticated business publication's upcoming editorial lineup—varied, insightful, grounded in real-world signals, and free from the homogenized language of generic content marketing.\n\nWhen source signals are weak or repetitive, your role is to identify unexplored angles and adjacent opportunities that still align with the data patterns, not to rephrase the same concept repeatedly.\n\n- Return ONLY valid JSON\n- No explanations\n- No markdown\n- No commentary\n- No extra keys\n- Follow the schema EXACTLY\n\nYou are not brainstorming.\nYou are curating, filtering, and preparing content for automated publishing.\n"
+            },
+            {
+              "content": "=\nYou have received aggregated intelligence from multiple data sources including search engine results, online community discussions, social media conversations, and industry news feeds{{ $json.source_signals }}\n\nYour Assignment:\n\nExtract actionable content opportunities from these signals and develop a strategically diverse editorial plan for SMOSYN Digitals.\n\nCompany Profile:\n\nCore Offering: AI-powered automation systems, workflow optimization architecture, and intelligent lead generation infrastructure \n\nPrimary Markets:UK domestic: Independent businesses,\nregional ecommerce operators,\nestablished SMEs seeking operational efficiency\n\nInternational: Technology startups, digital agencies, professional service firms, and knowledge workers pursuing competitive advantage.\n\n\nAnalysis Protocol\n\nStep 1 - Signal Identification: Scan the provided data for genuine problems, unanswered questions, expressed frustrations, knowledge gaps, emerging patterns, or trending conversations that indicate content demand.\n\nStep 2 - Audience Mapping: For each signal, identify the specific persona experiencing this need their role, business model, market maturity, and decision making context.\n\nStep 3 - Angle Differentiation: Ensure each topic approaches its subject from a unique perspective. Vary by: Specific pain point or trigger event Business maturity stage or operational scale Industry vertical or business modelGeographic or regulatory context Buyer journey phase or information needTechnical sophistication level\n\nStep 4 - Quality Filter: Reject topics that echo previous selections in structure, audience, or positioning.\n\nDemand genuine differentiation.Deliverable Specifications Generate between 10 and 20 content topics. Each must be structured as a JSON-compatible object containing:\n\nTopic: A compelling, specific title that clearly communicates value and differentiation\n\nIndustry: The target sector or business type (be specific—not just \"SME\" but \"regional accountancy firms\" or \"Shopify merchants\")\n\nRegion: Geographic focus (UK, EU, US, Global, or specific city/region)\n\npillar: Content category — Education (teaching concepts), Case (demonstrating results), Authority (thought leadership positioning), Personal (founder/team perspective)\n\ncontent_type: Temporal classification— Evergreen (permanently relevant), Breaking (responding to recent developments), Time-sensitive (seasonal or event-driven)\n\npriority_score: Numerical ranking from 1-10 based on signal strength, audience relevance, competitive opportunity, and strategic fit\n\nplatform_order: platform_order:\nReturn an ordered array of platform names (NOT numbers) showing the best publishing sequence for this specific topic.\nAllowed values only: [\"LinkedIn\",\"X\",\"Facebook\",\"Instagram\"].\n\nRules:\nThe order must change across topics based on the topic’s nature and audience.\nDo not return the same order for all topics. If you repeat the exact same order more than 3 times, that is a failure.\n\nChoose the order using these suitability cues:\n\nLinkedIn → B2B decision-makers, ops/process, ROI, case studies, professional services\nX → fast news, hot takes, trends, contrarian angles, quick insights\n\nFacebook → local community, SMEs, service businesses, practical how-tos, storytelling\n\nInstagram → visual hooks, brand stories, carousels, quick tips, behind-the-scenes\n\nInclude a short field platform_reason (max 12 words) explaining why the first platform is #1\n\nTopic created_at: Current date in YYYY-MM-DD format Source Data\n\n\nExecution Standards If source signals cluster around similar themes, your responsibility is to identify unexplored dimensions adjacent problems, alternative audiences, contrarian perspectives, or implementation focused angles that expand beyond the obvious while remaining grounded in the data patterns.Prioritize editorial sophistication over marketing convention. Your output should demonstrate strategic thinking, market awareness, and genuine insight into business challenges.\n\nReturn JSON structure:\n{\n  \"topics\": [\n    {\n      \"topic\": \"...\",\n      \"industry\": \"...\",\n      \"region\": \"...\",\n      \"pillar\": \"...\",\n      \"content_type\": \"...\",\n      \"priority_score\": 8,\n      \"platform_order\": [\"LinkedIn\", \"X\", \"Facebook\", \"Instagram\"],\n      \"platform_reason\": \"...\",\n      \"created_at\": \"2026-01-25\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "textFormat": {
+            "textOptions": {
+              "type": "json_object"
+            }
+          },
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        992,
+        224
+      ],
+      "id": "cf176bd3-ada5-4d7d-9687-a25686aa1bf2",
+      "name": "AI Generrate Topiic",
+      "credentials": {
+        "openAiApi": {
+          "id": "SEciRXbMvrUIt9sK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "SMOSYN AGENCY MS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "YOUR_SHEET_TAB_GID",
+          "mode": "list",
+          "cachedResultName": "Content Topic",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1808,
+        112
+      ],
+      "id": "50ca93a7-dfb3-49b0-88ce-b5b11081de65",
+      "name": "Get existing Topics",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "56G4saQ9gcqD6lOp",
+          "name": "SMOSYN Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "topic",
+              "field2": "TOPIC"
+            }
+          ]
+        },
+        "joinMode": "keepNonMatches",
+        "outputDataFrom": "input1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1936,
+        224
+      ],
+      "id": "4aa436da-ac55-4f26-91a8-c12695249413",
+      "name": "Dedupe. Topic"
+    },
+    {
+      "parameters": {
+        "url": "https://www.artificialintelligence-news.com/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        368,
+        176
+      ],
+      "id": "9ad064b1-f112-444a-9635-0e93ad8d33f9",
+      "name": "AI News"
+    },
+    {
+      "parameters": {
+        "url": "https://venturebeat.com/category/ai/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        368,
+        448
+      ],
+      "id": "ea33c58b-061a-4acf-8f21-e77a773a1d91",
+      "name": "venture. beat"
+    },
+    {
+      "parameters": {
+        "url": "https://www.marktechpost.com/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        272,
+        400
+      ],
+      "id": "ec081fee-11ee-4ee7-a8cd-b995a9ce7932",
+      "name": "mark tech post"
+    },
+    {
+      "parameters": {
+        "url": "https://www.uktech.news/feed",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        256,
+        112
+      ],
+      "id": "03987886-8433-4d2f-886e-4d757ef40e16",
+      "name": "uk tech"
+    },
+    {
+      "parameters": {
+        "numberInputs": 6
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        544,
+        160
+      ],
+      "id": "4f99d2ab-d592-4579-8eb7-0ea034ef83d5",
+      "name": "Merger Topiic Idea"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "=output[0].content[0].text.topics",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1296,
+        224
+      ],
+      "id": "29649900-9b0f-4a2c-9326-6d101cbdf488",
+      "name": "Split Out Content Topics"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "GOOGLE",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google_trends search",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI News",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "venture. beat",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "uk tech",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "mark tech post",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get existing Topics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google_trends search": {
+      "main": [
+        [
+          {
+            "node": "Merger Topiic Idea",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "GOOGLE": {
+      "main": [
+        [
+          {
+            "node": "Merger Topiic Idea",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Signals": {
+      "main": [
+        [
+          {
+            "node": "Aggregate for AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate for AI": {
+      "main": [
+        [
+          {
+            "node": "AI Generrate Topiic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Parse Platform Order": {
+      "main": [
+        [
+          {
+            "node": "Priority Scoore",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Append  Content Topic": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        []
+      ]
+    },
+    "Priority Scoore": {
+      "main": [
+        [
+          {
+            "node": "Dedupe. Topic",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "AI Generrate Topiic": {
+      "main": [
+        [
+          {
+            "node": "Split Out Content Topics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get existing Topics": {
+      "main": [
+        [
+          {
+            "node": "Dedupe. Topic",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Dedupe. Topic": {
+      "main": [
+        [
+          {
+            "node": " Append  Content Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merger Topiic Idea": {
+      "main": [
+        [
+          {
+            "node": "Normalize Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI News": {
+      "main": [
+        [
+          {
+            "node": "Merger Topiic Idea",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "venture. beat": {
+      "main": [
+        [
+          {
+            "node": "Merger Topiic Idea",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "mark tech post": {
+      "main": [
+        [
+          {
+            "node": "Merger Topiic Idea",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "uk tech": {
+      "main": [
+        [
+          {
+            "node": "Merger Topiic Idea",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Split Out Content Topics": {
+      "main": [
+        [
+          {
+            "node": " Parse Platform Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "dd206ba8-fb6c-43c7-9937-9293abe02888",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_TELEGRAM_CREDENTIAL_HASH8cea"
+  },
+  "id": "XhkZYL3yofCleHKy",
+  "tags": []
+}

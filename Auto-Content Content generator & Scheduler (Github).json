@@ -1,0 +1,1408 @@
+{
+  "name": "SMOSYN AUTOCONTENT STUDIO V2",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "image",
+        "prompt": "={{ $json.output[0].content[0].text }}",
+        "options": {
+          "size": "1024x1024"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -704,
+        144
+      ],
+      "id": "5e4d7314-7f3b-4798-b3d1-d5e62c8ccf30",
+      "name": "Generate an image",
+      "credentials": {
+        "openAiApi": {
+          "id": "SEciRXbMvrUIt9sK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "SMOSYN AGENCY MS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "YOUR_CONTENT_TOPIC_TAB_GID",
+          "mode": "list",
+          "cachedResultName": "Content Topic",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "STATUS",
+              "lookupValue": "Approved"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1936,
+        144
+      ],
+      "id": "73f8364d-c494-47e7-a564-33d32c7722f7",
+      "name": "GET APPROVED TOPICS",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "56G4saQ9gcqD6lOp",
+          "name": "SMOSYN Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1744,
+        144
+      ],
+      "id": "5a1962ce-7b67-4db0-b0be-fafb58913235",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=You are a content strategist for SMOSYN Digitals, a UK-based AI automation consultancy for SMEs.\n\nGenerate platform-optimized social media content that educates, builds authority, and drives engagement.\n\nPLATFORM OPTIMIZATION GUIDELINES:\n\nLinkedIn (Professional Network):\n- Tone: Professional, insightful, thought-leadership\n- Length: 150-200 words\n- Format: Hook → Context → Insight → Call-to-action\n- Focus: Business outcomes, ROI, operational efficiency\n- Use: Data points, case study teasers, industry trends\n\nX/Twitter (Fast-Paced Discussion):\n- Tone: Direct, conversational, slightly provocative\n- Length: 200-280 characters (keep punchy)\n- Format: Strong statement or question → Quick insight\n- Focus: Hot takes, quick wins, trending topics\n- Use: Threads for longer ideas (3-5 tweets max)\n\nFacebook (Community & Local):\n- Tone: Friendly, relatable, storytelling\n- Length: 100-150 words\n- Format: Story hook → Problem/Solution → Relatability\n- Focus: Practical how-tos, local business success, behind-the-scenes\n- Use: Conversational language, questions to spark comments\n\nInstagram (Visual Storytelling):\n- Tone: Casual, inspiring, visually-driven\n- Length: 80-120 words (caption supports image)\n- Format: Eye-catching opener → Value/Story → Hashtags\n- Focus: Brand personality, quick tips, visual case studies\n- Use: Emojis (tastefully), line breaks for readability, 5-10 hashtags\n\nCONTENT CONFIDENCE SCORING:\nScore each piece 1-10 based on:\n- Topic relevance to SMOSYN audience\n- Platform fit\n- Engagement potential\n- Call-to-action clarity\n\nFlag content <7 for human review.\n\nIMAGE REQUIREMENTS:\nDecide if topic needs visual support:\n- Educational/How-to → Often benefits from diagram/infographic\n- Stats/Data → Always needs visual representation\n- Thought leadership → Optional (headshot/quote graphic)\n- News/Trends → Often benefits from relevant imagery\n\nIf image needed, provide detailed DALL-E prompt:\n- Style: Professional, modern, clean\n- Mood: Trustworthy, innovative, approachable\n- Avoid: Stock photo look, generic business imagery\n- Include: SMOSYN brand feel (tech-forward but human)\n\nReturn ONLY valid JSON:\n{\n  \"post_text\": \"Platform-optimized caption with proper formatting\",\n  \"image_required\": true/false,\n  \"image_prompt\": \"Detailed DALL-E prompt if image_required=true, else empty string\",\n  \"hashtags\": [\"tag1\", \"tag2\", \"tag3\"],\n  \"content_confidence\": 8,\n  \"best_posting_time\": \"2PM GMT\",\n  \"posting_rationale\": \"Why this time works for this platform/audience\"\n}"
+            },
+            {
+              "content": "=Generate content for:\n\nTopic: {{ $json.TOPIC }}\nPlatform:{{ $json[' PRIMARY PLATFORM'] }}\nIndustry: {{ $json.INDUSTRY }}\nRegion: {{ $json.REGION }}\nContent Type: {{ $json['CONTENT TYPE'] }}\nPillar: {{ $json.PILLAR }}\n\nCreate platform-optimized post following guidelines above."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "textFormat": {
+            "textOptions": {
+              "type": "json_object"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -1536,
+        160
+      ],
+      "id": "b9964d61-fdee-4e71-8bf9-20f006854d72",
+      "name": " GENERATE CONTENT PACKAGE",
+      "executeOnce": false,
+      "credentials": {
+        "openAiApi": {
+          "id": "SEciRXbMvrUIt9sK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c5605bff-2457-4edb-9bbc-921c64eca895",
+              "leftValue": "= {{ $json.output.image_required }}",
+              "rightValue": "Draft",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1248,
+        160
+      ],
+      "id": "aac23028-8eff-4b2b-81b4-54072c18faba",
+      "name": "IMAGE REQUIRED?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "aa2de623-3ac7-48e6-b276-36b5a134d6eb",
+              "name": "post_text",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "0cc21715-ab7a-4ef0-98ee-a717e0ec223c",
+              "name": "image_url",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "f7e644e4-9aa2-4090-a4fa-ea081252e6e9",
+              "name": "confidence",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "ead6726e-d206-479f-aee0-b76fa14952a0",
+              "name": "best_time",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "b4d8d9d4-811b-4803-ae48-25dbd08e1be0",
+              "name": "status",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "0bcaf3a9-d80a-4b46-a846-f58db2de7acb",
+              "name": "hashtags",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -304,
+        144
+      ],
+      "id": "81c207f8-3528-4b2e-9477-5d4d9836ae90",
+      "name": "PREPARE FOR SHEET"
+    },
+    {
+      "parameters": {
+        "operation": "uploadFile",
+        "additionalFieldsFile": {}
+      },
+      "type": "n8n-nodes-cloudinary.cloudinary",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        144
+      ],
+      "id": "3c045aef-b64a-4252-9693-903ecdcb22f6",
+      "name": "Generate Image url",
+      "credentials": {
+        "cloudinaryApi": {
+          "id": "ZwJZrUP3bN7ZwNbO",
+          "name": "SMOSYN AUTTO-CONTENT Cloudinary account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "SMOSYN AGENCY MS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "YOUR_CONTENT_TOPIC_TAB_GID",
+          "mode": "list",
+          "cachedResultName": "Content Topic",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "TOPIC": "={{ $('Get Approved Topics').item.json.TOPIC }}",
+            "DISPATCHED AT": "={{  $now }}"
+          },
+          "matchingColumns": [
+            "TOPIC"
+          ],
+          "schema": [
+            {
+              "id": "INDUSTRY",
+              "displayName": "INDUSTRY",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "REGION",
+              "displayName": "REGION",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "PILLAR",
+              "displayName": "PILLAR",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": " PRIMARY PLATFORM",
+              "displayName": " PRIMARY PLATFORM",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "SECONDARY",
+              "displayName": "SECONDARY",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "TERTIARY",
+              "displayName": "TERTIARY",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "PLATFORM REASON",
+              "displayName": "PLATFORM REASON",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "CONTENT TYPE",
+              "displayName": "CONTENT TYPE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "TOPIC",
+              "displayName": "TOPIC",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "CREATED_AT",
+              "displayName": "CREATED_AT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "SCORE",
+              "displayName": "SCORE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "STATUS",
+              "displayName": "STATUS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "DISPATCHED AT",
+              "displayName": "DISPATCHED AT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -112,
+        144
+      ],
+      "id": "fa3caf98-5dd5-47ab-bb89-95832ecae001",
+      "name": " UPDATE TOPICS SHEET",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "56G4saQ9gcqD6lOp",
+          "name": "SMOSYN Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "=✅ Content Generation Complete\n\nPosts created: {{ $('Loop Over Items').itemMatching(0).length }}\nHigh confidence (8+): {{ count where confidence >= 8 }}\nNeeds review (<7): {{ count where confidence < 7 }}\n\nReview calendar: [https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit]",
+        "replyMarkup": "=none",
+        "forceReply": {},
+        "replyKeyboardOptions": {},
+        "replyKeyboardRemove": {},
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        112,
+        144
+      ],
+      "id": "7feffdca-fdb6-47e2-b755-54ae4eecf6b0",
+      "name": "Send a text message",
+      "webhookId": "2c9e515b-844c-4d1b-8c84-d0b72d07beb6",
+      "credentials": {
+        "telegramApi": {
+          "id": "Z08vJORLVCykMtXE",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "="
+            },
+            {
+              "content": "="
+            },
+            {
+              "role": "system",
+              "content": "=Create detailed DALL-E prompts for social media images.\n\nStyle: Professional, modern, clean, tech-forward\nMood: Trustworthy, innovative, approachable\nAvoid: Stock photos, generic business imagery\n\nReturn only the prompt text, no JSON.\n"
+            },
+            {
+              "content": "=Topic: {{ $('Get Approved Topics').item.json.TOPIC }}\nPost text: {{ $('OpenAI - Generate Content').item.json.output.post_text }}\nPlatform: {{ $('Get Approved Topics').item.json['PRIMARY PLATFORM'] }}\n\nCreate DALL-E prompt for accompanying image."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -1008,
+        144
+      ],
+      "id": "32473560-87ab-4daf-b209-97a4e5fad644",
+      "name": "AI - CREATE IMAGE PROMPT",
+      "credentials": {
+        "openAiApi": {
+          "id": "SEciRXbMvrUIt9sK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "SMOSYN AGENCY MS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "YOUR_CONTENT_PLAN_TAB_GID",
+          "mode": "list",
+          "cachedResultName": "Content Calendar",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "Approved"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1776,
+        -128
+      ],
+      "id": "433bc70f-8b3f-4487-ac6a-0a0f30e333bc",
+      "name": " GET APPROVED CONTENT",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "56G4saQ9gcqD6lOp",
+          "name": "SMOSYN Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Group by platform\nconst byPlatform = {};\nitems.forEach(item => {\n  const platform = item.json.PLATFORM;\n  if (!byPlatform[platform]) byPlatform[platform] = [];\n  byPlatform[platform].push(item.json);\n});\n\n// Schedule 3 posts/day per platform\nconst schedule = [];\nconst startDate = new Date();\nstartDate.setDate(startDate.getDate() + 1); // Start tomorrow\n\nObject.keys(byPlatform).forEach(platform => {\n  const posts = byPlatform[platform];\n  \n  posts.slice(0, 21).forEach((post, idx) => {\n    const dayOffset = Math.floor(idx / 3);\n    const postDate = new Date(startDate);\n    postDate.setDate(postDate.getDate() + dayOffset);\n    \n    // Times: 10 AM, 2 PM, 6 PM\n    const times = ['10:00', '14:00', '18:00'];\n    const time = times[idx % 3];\n    \n    schedule.push({\n      ...post,\n      scheduled_date: postDate.toISOString().split('T')[0],\n      scheduled_time: time\n    });\n  });\n});\n\nreturn schedule.map(item => ({ json: item }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1568,
+        -128
+      ],
+      "id": "b6e9d8b6-a9e2-4f79-97b3-ebe1ec6e925a",
+      "name": "BUILD WEEKLY CALENDAR"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "SMOSYN AGENCY MS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "YOUR_CONTENT_PLAN_TAB_GID",
+          "mode": "list",
+          "cachedResultName": "Content Calendar",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "=Scheduled - Pending Confirmation",
+            "Scheduled Date": "={{ $json.scheduled_date }}",
+            "Scheduled Time": "={{ $json.scheduled_time }}"
+          },
+          "matchingColumns": [
+            "TOPIC"
+          ],
+          "schema": [
+            {
+              "id": "Topic",
+              "displayName": "Topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Platform",
+              "displayName": "Platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Post Text",
+              "displayName": "Post Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Image URL",
+              "displayName": "Image URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Hashtags",
+              "displayName": "Hashtags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Best Time",
+              "displayName": "Best Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Confidence",
+              "displayName": "Confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date Generated",
+              "displayName": "Date Generated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Scheduled Date",
+              "displayName": "Scheduled Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Scheduled Time",
+              "displayName": "Scheduled Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Published DateTime",
+              "displayName": "Published DateTime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Post URL",
+              "displayName": "Post URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Likes",
+              "displayName": "Likes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Shares",
+              "displayName": "Shares",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Comment",
+              "displayName": "Comment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Performance Score",
+              "displayName": "Performance Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1392,
+        -128
+      ],
+      "id": "c3ab42a4-9524-406f-9502-2e7f04245dc3",
+      "name": "UPDATE WITH SCHEDULE",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "56G4saQ9gcqD6lOp",
+          "name": "SMOSYN Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nlet message = 'Weekly Content Calendar\\n\\n';\n\nconst byDate = {};\nitems.forEach(item => {\n  const date = item.json.scheduled_date;\n  if (!byDate[date]) byDate[date] = [];\n  byDate[date].push(item.json);\n});\n\nObject.keys(byDate).sort().forEach(date => {\n  message += `${date}\\n`;\n  byDate[date].forEach(post => {\n    message += `- ${post.scheduled_time} ${post.PLATFORM}: ${post.TOPIC}\\n`;\n  });\n  message += '\\n';\n});\n\nreturn { json: { preview: message } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1184,
+        -128
+      ],
+      "id": "4c5f669c-938c-4faa-a68f-f8346f11cb0e",
+      "name": "FORMAT TELEGRAM PREVIEW"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "message": "={{ $json.preview }}",
+        "approvalOptions": {
+          "values": {}
+        },
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "resumeAmount": 24
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1008,
+        -128
+      ],
+      "id": "f28cc193-d63b-4e2d-949f-6fb6d00d6781",
+      "name": "SEND & WAIT",
+      "webhookId": "c8b00552-27f4-4c06-a658-7f750943ce9e",
+      "credentials": {
+        "telegramApi": {
+          "id": "Z08vJORLVCykMtXE",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1b9bdbae-b005-4801-bf0e-f4d4f258b4e3",
+              "leftValue": "={{ $json.approved }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -624,
+        -128
+      ],
+      "id": "199d091c-ec9e-4525-8edc-33f336c821eb",
+      "name": "Content  APPROVED?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "SMOSYN AGENCY MS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "YOUR_CONTENT_PLAN_TAB_GID",
+          "mode": "list",
+          "cachedResultName": "Content Calendar",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "Scheduled - Pending Confirmation",
+            "row_number": 0
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Topic",
+              "displayName": "Topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Platform",
+              "displayName": "Platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Post Text",
+              "displayName": "Post Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Image URL",
+              "displayName": "Image URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Hashtags",
+              "displayName": "Hashtags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Best Time",
+              "displayName": "Best Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Confidence",
+              "displayName": "Confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date Generated",
+              "displayName": "Date Generated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Scheduled Date",
+              "displayName": "Scheduled Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Scheduled Time",
+              "displayName": "Scheduled Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Published DateTime",
+              "displayName": "Published DateTime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Post URL",
+              "displayName": "Post URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Likes",
+              "displayName": "Likes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Shares",
+              "displayName": "Shares",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Comment",
+              "displayName": "Comment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Performance Score",
+              "displayName": "Performance Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -416,
+        -144
+      ],
+      "id": "52c67bf7-7557-47ba-9167-293b6334c1d9",
+      "name": "Update CONFIRM SCHEDULED",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "56G4saQ9gcqD6lOp",
+          "name": "SMOSYN Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "Schedule activated. Posts will publish automatically.",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -240,
+        -144
+      ],
+      "id": "619f387c-d8a4-4eb6-a100-35c9176a4a10",
+      "name": "Schedule CONFIRMATION",
+      "webhookId": "c8b00552-27f4-4c06-a658-7f750943ce9e",
+      "credentials": {
+        "telegramApi": {
+          "id": "Z08vJORLVCykMtXE",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const approval = $input.item.json;\nconst scheduledPosts = $('Update with Schedule').all();\n\nreturn scheduledPosts.map(post => ({\n  json: {\n    ...post.json,\n    approved: approval.approved\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -816,
+        -128
+      ],
+      "id": "84fe0174-a4a5-4077-8465-a0c2ae190f0c",
+      "name": "RESTORE SCHEDULED POSTS"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 */2 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -2128,
+        144
+      ],
+      "id": "a353a99e-db71-45c4-8b6d-a558272f261d",
+      "name": "Schedule Content Gen Trigger",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 18 * * 0"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1968,
+        -128
+      ],
+      "id": "1a7b9c9f-7a30-4f7f-abe7-cc306b681ac8",
+      "name": "Schedule Coontent  Schhedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Generate an image": {
+      "main": [
+        [
+          {
+            "node": "Generate Image url",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET APPROVED TOPICS": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": " GENERATE CONTENT PACKAGE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " GENERATE CONTENT PACKAGE": {
+      "main": [
+        [
+          {
+            "node": "IMAGE REQUIRED?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IMAGE REQUIRED?": {
+      "main": [
+        [
+          {
+            "node": "AI - CREATE IMAGE PROMPT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "PREPARE FOR SHEET",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PREPARE FOR SHEET": {
+      "main": [
+        [
+          {
+            "node": " UPDATE TOPICS SHEET",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image url": {
+      "main": [
+        [
+          {
+            "node": "PREPARE FOR SHEET",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " UPDATE TOPICS SHEET": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI - CREATE IMAGE PROMPT": {
+      "main": [
+        [
+          {
+            "node": "Generate an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " GET APPROVED CONTENT": {
+      "main": [
+        [
+          {
+            "node": "BUILD WEEKLY CALENDAR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BUILD WEEKLY CALENDAR": {
+      "main": [
+        [
+          {
+            "node": "UPDATE WITH SCHEDULE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UPDATE WITH SCHEDULE": {
+      "main": [
+        [
+          {
+            "node": "FORMAT TELEGRAM PREVIEW",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FORMAT TELEGRAM PREVIEW": {
+      "main": [
+        [
+          {
+            "node": "SEND & WAIT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEND & WAIT": {
+      "main": [
+        [
+          {
+            "node": "RESTORE SCHEDULED POSTS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content  APPROVED?": {
+      "main": [
+        [
+          {
+            "node": "Update CONFIRM SCHEDULED",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Update CONFIRM SCHEDULED": {
+      "main": [
+        [
+          {
+            "node": "Schedule CONFIRMATION",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Content Gen Trigger": {
+      "main": [
+        [
+          {
+            "node": "GET APPROVED TOPICS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Coontent  Schhedule Trigger": {
+      "main": [
+        [
+          {
+            "node": " GET APPROVED CONTENT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RESTORE SCHEDULED POSTS": {
+      "main": [
+        [
+          {
+            "node": "Content  APPROVED?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "458ccd5d-2a36-477d-9cc1-4bae51687a49",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_TELEGRAM_CREDENTIAL_HASH8cea"
+  },
+  "id": "ifEOUaPP3W0uG3sL",
+  "tags": []
+}
