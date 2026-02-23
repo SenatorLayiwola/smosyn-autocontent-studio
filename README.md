@@ -4,6 +4,26 @@
 
 ---
 
+## The Story Behind This Build
+
+This is not my first attempt at content automation.
+
+Version 1 was a single n8n workflow — two parallel schedule triggers running side by side. One handled text generation and posting (Twin A). One handled image generation and posting (Twin B). It worked, but it had real problems:
+
+- Topics were entered manually — no discovery, no intelligence
+- No approval gates — content could post without review
+- No hashtag generation
+- No scheduling logic — bumper posting was a real issue
+- No error handling — failures were silent
+- Generic node names — impossible to debug or hand over to a client
+
+It was functional. It was not production-ready.
+
+**Version 1.1 is the rebuild.** Every weakness in v1 became a design requirement for v1.1. The result is what you see in this repository.
+
+
+---
+
 ## What This Is
 
 AutoContent Studio is a production-grade AI content automation system built on n8n. It manages the complete content lifecycle — from live signal discovery and topic qualification, through AI content and image generation, to controlled scheduling and platform publishing — with human approval gates at every critical stage.
