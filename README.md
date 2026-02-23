@@ -24,13 +24,34 @@ It was functional. It was not production-ready.
 
 ---
 
-## What This Is
+---
 
-AutoContent Studio is a production-grade AI content automation system built on n8n. It manages the complete content lifecycle — from live signal discovery and topic qualification, through AI content and image generation, to controlled scheduling and platform publishing — with human approval gates at every critical stage.
+## What Is AutoContent Studio?
+
+A production-grade AI content automation system built on n8n. It manages the complete content lifecycle — from live signal discovery and topic qualification, through AI content and image generation, to controlled scheduling and platform publishing — with human approval gates at every critical stage.
 
 > Automation without control is chaos. Control without automation is inefficient. This system balances both.
 
+
 ---
+
+
+## v1 vs v1.1 — What Changed
+
+| Area | v1 (Twin A & B) | v1.1 (Current) |
+|------|----------------|----------------|
+| Topic sourcing | Manual entry only | 7 live sources + AI scoring |
+| Architecture | 1 combined workflow | 5 separate modular workflows |
+| Hashtags | None | Auto-generated per post |
+| Approval gates | None | Telegram at every critical stage |
+| Scheduling | Basic time triggers | AI-assigned + time distribution logic |
+| Error handling | None — silent failures | Centralised error handler + Telegram alerts |
+| Deduplication | None | Built into topic pipeline |
+| Performance tracking | None | WF-04B built — pending API activation |
+| Node naming | Generic (If, Switch1) | Descriptive and client-safe |
+| Documentation | None | Full Master + Client docs |
+
+
 
 ## System Architecture
 ```
